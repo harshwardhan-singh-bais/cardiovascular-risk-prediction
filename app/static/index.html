@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cardiovascular Risk Prediction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0fff4;
+  --bg2:#dcffe8;
+  --card:#ffffff;
+  --card2:#f8fffb;
+  --border:#b2f5cd;
+  --border2:#48bb78;
+  --txt:#062d1a;
+  --txt2:#1a4d32;
+  --muted:#4a7a5c;
+  --accent:#00ff6a;
+  --accent2:#00cc55;
+  --accentbg:rgba(0,194,90,.1);
+  --red:#e53e3e;
+  --redbg:rgba(229,62,62,.08);
+  --redbrd:rgba(229,62,62,.3);
+  --greenbg:rgba(0,194,90,.08);
+  --greenbrd:rgba(0,194,90,.3);
+  --r6:6px;--r10:10px;--r16:16px;--r22:22px;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --tr:.18s cubic-bezier(.4,0,.2,1);
+  --shadow:0 2px 16px rgba(0,80,30,.08),0 1px 3px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--txt);
+  min-height:100vh;
+  padding:28px;
+}
+
+/* ── LAYOUT ────────────────────────────────────────── */
+.wrap{
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;gap:22px;
+}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}}
+
+/* ── PANELS ────────────────────────────────────────── */
+.panel{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r22);padding:28px;
+  box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--accent),#7fffba);
+}
+.panel-title{font-size:1.05rem;font-weight:700;color:var(--txt);margin-bottom:4px}
+.panel-sub{font-size:.78rem;color:var(--muted);margin-bottom:22px}
+
+/* ── FIELD GROUPS ──────────────────────────────────── */
+.fg{margin-bottom:20px}
+.fg-title{
+  font-size:.68rem;font-weight:700;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--accent2);
+  margin-bottom:12px;padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+label{font-size:.78rem;font-weight:600;color:var(--txt2)}
+.unit{font-weight:400;color:var(--muted);font-size:.72rem}
+
+/* ── INPUTS ────────────────────────────────────────── */
+input[type="number"],select{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r6);color:var(--txt);
+  font-family:var(--mono);font-size:.9rem;font-weight:600;
+  padding:7px 10px;width:100%;
+  transition:border-color var(--tr),box-shadow var(--tr);
+  -webkit-appearance:none;appearance:none;
+}
+input[type="number"]:focus,select:focus{
+  outline:none;border-color:var(--accent2);
+  box-shadow:0 0 0 3px rgba(0,194,90,.18);
+}
+select option{background:var(--card);color:var(--txt)}
+
+/* slider + number */
+.ri{display:flex;align-items:center;gap:9px}
+input[type="range"]{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:5px;border-radius:5px;cursor:pointer;
+  background:var(--bg2);border:none;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 3px rgba(0,194,90,.25);
+  cursor:pointer;transition:transform var(--tr);
+}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type="range"]::-moz-range-thumb{
+  width:17px;height:17px;border-radius:50%;border:none;
+  background:var(--accent);cursor:pointer;
+}
+.ri input[type="number"]{width:68px;text-align:center;flex-shrink:0}
+
+/* toggle */
+.tg{display:flex;border-radius:var(--r6);overflow:hidden;border:1px solid var(--border);background:var(--bg2)}
+.tg label{flex:1;cursor:pointer}
+.tg input[type="radio"]{display:none}
+.tg label span{
+  display:block;text-align:center;padding:7px 4px;
+  font-size:.78rem;font-weight:600;color:var(--muted);
+  transition:background var(--tr),color var(--tr);
+}
+.tg input[type="radio"]:checked + span{
+  background:var(--accent);color:#fff;
+}
+.tg label:hover span{background:rgba(0,194,90,.15);color:var(--txt)}
+
+/* ── BUTTONS ───────────────────────────────────────── */
+.form-foot{
+  display:flex;gap:10px;justify-content:flex-end;
+  margin-top:22px;padding-top:16px;border-top:1px solid var(--border);
+}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 20px;border-radius:var(--r10);
+  font-family:var(--sans);font-size:.86rem;font-weight:700;
+  cursor:pointer;transition:all var(--tr);border:none;
+  letter-spacing:.2px;
+}
+.btn-primary{
+  background:var(--accent);color:#fff;
+  box-shadow:0 3px 14px rgba(0,194,90,.4);
+}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 6px 22px rgba(0,194,90,.5)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-sec{
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border);
+}
+.btn-sec:hover{background:var(--bg2);color:var(--txt)}
+
+/* ── RESULTS PANEL ─────────────────────────────────── */
+.res-panel{
+  position:sticky;top:28px;
+  max-height:calc(100vh - 56px);overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.res-panel::-webkit-scrollbar{width:4px}
+.res-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* idle */
+.idle{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;
+  min-height:480px;padding:40px 28px;
+  border-radius:var(--r22);
+}
+.idle-ico{font-size:3rem;margin-bottom:14px;opacity:.4}
+.idle h3{font-size:1.1rem;font-weight:700;color:var(--txt);margin-bottom:8px}
+.idle p{color:var(--muted);font-size:.84rem;max-width:280px;line-height:1.6}
+.idle-feats{margin-top:20px;display:flex;flex-direction:column;gap:6px}
+.idle-feats span{font-size:.78rem;color:var(--txt2)}
+
+/* loading */
+.loading{
+  display:none;flex-direction:column;align-items:center;
+  justify-content:center;min-height:480px;gap:18px;
+  border-radius:var(--r22);
+}
+.loading p{color:var(--muted);font-size:.84rem}
+.ecg-wrap{width:220px;height:55px}
+.ecg-wrap svg{width:100%;height:100%}
+.ecg-line{
+  fill:none;stroke:var(--accent);stroke-width:2.5;
+  stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:300;stroke-dashoffset:300;
+  animation:ecg 1.3s ease-in-out infinite;
+}
+@keyframes ecg{
+  0%{stroke-dashoffset:300;opacity:0}
+  20%{opacity:1}80%{opacity:1}
+  100%{stroke-dashoffset:0;opacity:0}
+}
+
+/* result */
+.result{display:none;flex-direction:column;gap:0}
+
+/* verdict */
+.verdict{
+  display:flex;align-items:center;gap:13px;
+  padding:16px 18px;border-radius:var(--r16);
+  margin-bottom:12px;border:2px solid;
+  animation:sli .35s ease;
+}
+.verdict.safe{background:var(--greenbg);border-color:var(--greenbrd)}
+.verdict.risk{background:var(--redbg);border-color:var(--redbrd)}
+.v-ico{font-size:2rem;flex-shrink:0}
+.v-body{flex:1}
+.v-label{font-size:.95rem;font-weight:800;color:var(--txt);line-height:1.25}
+.v-sub{font-size:.76rem;color:var(--txt2);margin-top:3px}
+.v-badge{
+  font-size:.72rem;font-weight:700;padding:4px 10px;
+  border-radius:20px;white-space:nowrap;
+}
+.verdict.safe .v-badge{background:rgba(0,194,90,.15);color:var(--accent2)}
+.verdict.risk .v-badge{background:rgba(229,62,62,.15);color:var(--red)}
+
+/* sub-cards */
+.sc{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r16);padding:16px;margin-bottom:12px;
+}
+.sc h4{
+  font-size:.68rem;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+}
+
+/* proba bars */
+.pb-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pb-lbl{font-size:.76rem;font-weight:600;color:var(--txt2);width:56px;flex-shrink:0}
+.pb-track{flex:1;height:10px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--border)}
+.pb-fill{height:100%;border-radius:5px;width:0%;transition:width .9s cubic-bezier(.4,0,.2,1)}
+.pb-no {background:linear-gradient(90deg,#00c25a,#7fffba)}
+.pb-yes{background:linear-gradient(90deg,#f97316,#e53e3e)}
+.pb-val{font-size:.78rem;font-family:var(--mono);font-weight:600;width:42px;text-align:right;color:var(--txt)}
+
+/* gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:4px 0}
+.gauge-svg{width:180px;overflow:visible}
+#ga-arc{transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)}
+#ga-needle{transition:transform .9s cubic-bezier(.4,0,.2,1)}
+.g-score{
+  font-size:1.8rem;font-weight:800;font-family:var(--mono);
+  color:var(--txt);margin-top:-6px;
+}
+.g-lvl{font-size:.76rem;font-weight:600;color:var(--muted);margin-top:2px}
+
+/* feature bars */
+.feat-info{font-size:.68rem;font-weight:400;color:var(--muted);margin-left:5px;text-transform:none;letter-spacing:0}
+.fb-list{display:flex;flex-direction:column;gap:9px}
+.fb-row{display:flex;flex-direction:column;gap:3px}
+.fb-meta{display:flex;justify-content:space-between;align-items:baseline}
+.fb-name{font-size:.76rem;font-weight:600;color:var(--txt2)}
+.fb-val-lbl{font-size:.68rem;color:var(--muted);margin-left:4px}
+.fb-pct{font-size:.7rem;font-family:var(--mono);color:var(--muted)}
+.fb-track{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.fb-fill{height:100%;border-radius:4px;width:0%}
+.r1{background:linear-gradient(90deg,#e53e3e,#f97316)}
+.r2{background:linear-gradient(90deg,#f97316,#eab308)}
+.r3{background:linear-gradient(90deg,#eab308,#84cc16)}
+.rn{background:linear-gradient(90deg,#00c25a,#06b6d4)}
+
+/* ai message */
+.ai-msg{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:13px 15px;border-radius:var(--r10);
+  border:1px solid var(--border);background:var(--card2);
+  margin-bottom:12px;
+}
+.ai-ico{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.ai-msg p{font-size:.8rem;color:var(--txt2);line-height:1.65}
+
+/* disclaimer */
+.disc{font-size:.67rem;color:var(--muted);text-align:center;line-height:1.55;padding:8px 0 2px}
+
+/* ── ANIMATIONS ────────────────────────────────────── */
+@keyframes fin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sli{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── RESPONSIVE ────────────────────────────────────── */
+@media(max-width:600px){
+  body{padding:16px}
+  .fgrid,.fgrid3{grid-template-columns:1fr}
+  .form-foot{flex-direction:column}
+  .btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ══ FORM PANEL ══ -->
+  <section class="panel" id="form-panel">
+    <div class="panel-title">Patient Information</div>
+    <div class="panel-sub">Fill in all 15 fields accurately for best results</div>
+
+    <form id="pform" novalidate>
+
+      <!-- Demographics -->
+      <div class="fg">
+        <div class="fg-title">Demographics</div>
+        <div class="fgrid">
+
+          <div class="field">
+            <label>Sex</label>
+            <div class="tg">
+              <label><input type="radio" name="male" value="0" id="sex-f" required/><span>Female</span></label>
+              <label><input type="radio" name="male" value="1" id="sex-m"/><span>Male</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="age">Age <span class="unit">years</span></label>
+            <div class="ri">
+              <input type="range" id="age-r" min="20" max="80" value="45"/>
+              <input type="number" id="age" name="age" min="20" max="80" value="45" required/>
+            </div>
+          </div>
+
+          <div class="field" style="grid-column:1/-1">
+            <label for="education">Education Level</label>
+            <select id="education" name="education" required>
+              <option value="">Select your education level…</option>
+              <option value="1">Primary Education / No Diploma</option>
+              <option value="2">High School Diploma / GED / Secondary</option>
+              <option value="3">Vocational Training / Associate Degree / Some College</option>
+              <option value="4">University Degree / Masters / PhD</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Smoking -->
+      <div class="fg">
+        <div class="fg-title">Smoking</div>
+        <div class="fgrid">
+
+          <div class="field">
+            <label>Current Smoker</label>
+            <div class="tg">
+              <label><input type="radio" name="currentSmoker" value="0" id="sm-n" required/><span>No</span></label>
+              <label><input type="radio" name="currentSmoker" value="1" id="sm-y"/><span>Yes</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="cigsPerDay">Cigarettes / Day <span class="unit">count</span></label>
+            <div class="ri">
+              <input type="range" id="cigs-r" min="0" max="60" value="0"/>
+              <input type="number" id="cigsPerDay" name="cigsPerDay" min="0" max="70" value="0" required/>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Medical History -->
+      <div class="fg">
+        <div class="fg-title">Medical History</div>
+        <div class="fgrid3">
+
+          <div class="field">
+            <label>BP Medication</label>
+            <div class="tg">
+              <label><input type="radio" name="BPMeds" value="0" id="bp-n" required/><span>No</span></label>
+              <label><input type="radio" name="BPMeds" value="1" id="bp-y"/><span>Yes</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Prev. Stroke</label>
+            <div class="tg">
+              <label><input type="radio" name="prevalentStroke" value="0" id="st-n" required/><span>No</span></label>
+              <label><input type="radio" name="prevalentStroke" value="1" id="st-y"/><span>Yes</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Hypertension</label>
+            <div class="tg">
+              <label><input type="radio" name="prevalentHyp" value="0" id="hy-n" required/><span>No</span></label>
+              <label><input type="radio" name="prevalentHyp" value="1" id="hy-y"/><span>Yes</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Diabetes</label>
+            <div class="tg">
+              <label><input type="radio" name="diabetes" value="0" id="db-n" required/><span>No</span></label>
+              <label><input type="radio" name="diabetes" value="1" id="db-y"/><span>Yes</span></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Clinical Vitals -->
+      <div class="fg">
+        <div class="fg-title">Clinical Vitals</div>
+        <div class="fgrid">
+
+          <div class="field">
+            <label for="totChol">Total Cholesterol <span class="unit">mg/dL</span></label>
+            <div class="ri">
+              <input type="range" id="chol-r" min="100" max="600" value="200"/>
+              <input type="number" id="totChol" name="totChol" min="100" max="600" value="200" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="sysBP">Systolic BP <span class="unit">mmHg</span></label>
+            <div class="ri">
+              <input type="range" id="sys-r" min="80" max="295" value="120"/>
+              <input type="number" id="sysBP" name="sysBP" min="80" max="295" value="120" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="diaBP">Diastolic BP <span class="unit">mmHg</span></label>
+            <div class="ri">
+              <input type="range" id="dia-r" min="40" max="150" value="80"/>
+              <input type="number" id="diaBP" name="diaBP" min="40" max="150" value="80" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="BMI">BMI <span class="unit">kg/m²</span></label>
+            <div class="ri">
+              <input type="range" id="bmi-r" min="10" max="60" step="0.1" value="25"/>
+              <input type="number" id="BMI" name="BMI" min="10" max="60" step="0.1" value="25" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="heartRate">Heart Rate <span class="unit">bpm</span></label>
+            <div class="ri">
+              <input type="range" id="hr-r" min="40" max="150" value="75"/>
+              <input type="number" id="heartRate" name="heartRate" min="40" max="150" value="75" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="glucose">Glucose <span class="unit">mg/dL</span></label>
+            <div class="ri">
+              <input type="range" id="glc-r" min="40" max="400" value="90"/>
+              <input type="number" id="glucose" name="glucose" min="40" max="400" value="90" required/>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-foot">
+        <button type="button" id="reset-btn" class="btn btn-sec">Reset</button>
+        <button type="submit" id="predict-btn" class="btn btn-primary">Analyze Risk →</button>
+      </div>
+
+    </form>
+  </section>
+
+  <!-- ══ RESULTS PANEL ══ -->
+  <section class="res-panel" id="res-panel">
+
+    <!-- Idle -->
+    <div class="panel idle" id="state-idle">
+      <div class="idle-ico">📋</div>
+      <h3>Ready to Analyze</h3>
+      <p>Fill in the patient form on the left, then click <strong>Analyze Risk</strong> to get an instant prediction.</p>
+      <div class="idle-feats">
+        <span>✅ CHD probability score</span>
+        <span>✅ Composite 0–100 risk gauge</span>
+        <span>✅ Top contributing risk factors</span>
+        <span>✅ Clinical recommendation</span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="panel loading" id="state-loading">
+      <div class="ecg-wrap">
+        <svg viewBox="0 0 100 30">
+          <polyline class="ecg-line" points="0,15 12,15 17,15 21,2 25,28 29,15 42,15 52,15 57,5 62,25 66,15 100,15"/>
+        </svg>
+      </div>
+      <p>Analyzing cardiovascular risk…</p>
+    </div>
+
+    <!-- Result -->
+    <div class="panel result" id="state-result">
+
+      <!-- Verdict -->
+      <div class="verdict" id="verdict">
+        <div class="v-ico" id="v-ico">📋</div>
+        <div class="v-body">
+          <div class="v-label" id="v-label">—</div>
+          <div class="v-sub"   id="v-sub">—</div>
+        </div>
+        <div class="v-badge" id="v-badge">—</div>
+      </div>
+
+      <!-- Probabilities -->
+      <div class="sc">
+        <h4>Prediction Probabilities</h4>
+        <div class="pb-row">
+          <span class="pb-lbl">No CHD</span>
+          <div class="pb-track"><div class="pb-fill pb-no" id="pb-no"></div></div>
+          <span class="pb-val" id="pv-no">0%</span>
+        </div>
+        <div class="pb-row">
+          <span class="pb-lbl">CHD Risk</span>
+          <div class="pb-track"><div class="pb-fill pb-yes" id="pb-yes"></div></div>
+          <span class="pb-val" id="pv-yes">0%</span>
+        </div>
+      </div>
+
+      <!-- Gauge -->
+      <div class="sc">
+        <h4>Composite Risk Score</h4>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 200 110">
+            <defs>
+              <linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%"   stop-color="#00c25a"/>
+                <stop offset="40%"  stop-color="#eab308"/>
+                <stop offset="75%"  stop-color="#f97316"/>
+                <stop offset="100%" stop-color="#e53e3e"/>
+              </linearGradient>
+            </defs>
+            <path d="M15 95 A85 85 0 0 1 185 95" fill="none" stroke="#d6fbe6" stroke-width="18" stroke-linecap="round"/>
+            <path d="M15 95 A85 85 0 0 1 185 95" fill="none" stroke="url(#gg)" stroke-width="18" stroke-linecap="round" opacity=".25"/>
+            <path id="ga-arc" d="M15 95 A85 85 0 0 1 185 95" fill="none" stroke="url(#gg)" stroke-width="18" stroke-linecap="round"
+                  stroke-dasharray="267" stroke-dashoffset="267"/>
+            <line id="ga-needle" x1="100" y1="95" x2="100" y2="22"
+                  stroke="#0d2b1a" stroke-width="2.5" stroke-linecap="round"
+                  transform="rotate(-90 100 95)"/>
+            <circle cx="100" cy="95" r="5" fill="#0d2b1a"/>
+          </svg>
+          <div class="g-score" id="g-score">0</div>
+          <div class="g-lvl"   id="g-lvl">—</div>
+        </div>
+      </div>
+
+      <!-- Feature Contributions -->
+      <div class="sc">
+        <h4>Feature Contributions <span class="feat-info">What drove this prediction?</span></h4>
+        <div class="fb-list" id="fb-list"></div>
+      </div>
+
+      <!-- AI message -->
+      <div class="ai-msg">
+        <div class="ai-ico">🤖</div>
+        <p id="ai-txt">—</p>
+      </div>
+
+      <p class="disc">⚠️ For educational and research purposes only. Always consult a licensed medical professional for clinical decisions.</p>
+
+    </div><!-- /result -->
+
+  </section><!-- /res-panel -->
+
+</div><!-- /wrap -->
+
+<script>
+const API = 'http://localhost:8000';
+
+/* ── Slider ↔ Number sync ─────────────────────────── */
+const PAIRS = [
+  ['age-r','age'],['cigs-r','cigsPerDay'],
+  ['chol-r','totChol'],['sys-r','sysBP'],
+  ['dia-r','diaBP'],['bmi-r','BMI'],
+  ['hr-r','heartRate'],['glc-r','glucose'],
+];
+
+PAIRS.forEach(([rid,nid]) => {
+  const r = document.getElementById(rid);
+  const n = document.getElementById(nid);
+  if (!r||!n) return;
+  const upSlider = val => {
+    const lo=+r.min,hi=+r.max,pct=((val-lo)/(hi-lo))*100;
+    r.style.background=`linear-gradient(90deg,#00c25a ${pct}%,#d6fbe6 ${pct}%)`;
+  };
+  r.addEventListener('input',()=>{ n.value=r.value; upSlider(+r.value); });
+  n.addEventListener('input',()=>{ r.value=Math.min(Math.max(+n.value,+r.min),+r.max); upSlider(+r.value); });
+  upSlider(+r.value);
+});
+
+/* ── State switcher ───────────────────────────────── */
+function showState(id) {
+  ['state-idle','state-loading','state-result'].forEach(s => {
+    const el = document.getElementById(s);
+    if (s===id) {
+      el.style.display = s==='state-result' ? 'flex' : 'flex';
+      if(s==='state-result') el.style.flexDirection='column';
+    } else {
+      el.style.display='none';
+    }
+  });
+}
+showState('state-idle');
+
+/* ── Collect data ─────────────────────────────────── */
+function collect() {
+  const radio = name => { const e=document.querySelector(`input[name="${name}"]:checked`); return e?+e.value:null; };
+  const num   = id   => { const e=document.getElementById(id); return (e&&e.value!=='')?+e.value:null; };
+  const sel   = id   => { const e=document.getElementById(id); return (e&&e.value)?+e.value:null; };
+  return {
+    male:radio('male'), age:num('age'), education:sel('education'),
+    currentSmoker:radio('currentSmoker'), cigsPerDay:num('cigsPerDay'),
+    BPMeds:radio('BPMeds'), prevalentStroke:radio('prevalentStroke'),
+    prevalentHyp:radio('prevalentHyp'), diabetes:radio('diabetes'),
+    totChol:num('totChol'), sysBP:num('sysBP'), diaBP:num('diaBP'),
+    BMI:num('BMI'), heartRate:num('heartRate'), glucose:num('glucose'),
+  };
+}
+
+/* ── Submit ───────────────────────────────────────── */
+document.getElementById('pform').addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = collect();
+  const miss = Object.entries(data).filter(([,v])=>v===null||isNaN(v)).map(([k])=>k);
+  if (miss.length) { alert('Missing fields: '+miss.join(', ')); return; }
+
+  document.getElementById('predict-btn').disabled = true;
+  showState('state-loading');
+
+  try {
+    const res = await fetch(API+'/predict',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data),
+    });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e.detail||'Error '+res.status); }
+    renderResult(await res.json());
+    showState('state-result');
+    document.getElementById('res-panel').scrollIntoView({behavior:'smooth',block:'start'});
+  } catch(err) {
+    showState('state-idle');
+    alert('❌ '+err.message+'\n\nMake sure the server is running:\n  python -m uvicorn app.backend:app --port 8000');
+  } finally {
+    document.getElementById('predict-btn').disabled = false;
+  }
+});
+
+/* ── Reset ────────────────────────────────────────── */
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  document.getElementById('pform').reset();
+  PAIRS.forEach(([rid,nid])=>{
+    const r=document.getElementById(rid),n=document.getElementById(nid);
+    if(!r||!n) return;
+    r.value=r.defaultValue; n.value=r.defaultValue;
+    const lo=+r.min,hi=+r.max,pct=((+r.value-lo)/(hi-lo))*100;
+    r.style.background=`linear-gradient(90deg,#00c25a ${pct}%,#d6fbe6 ${pct}%)`;
+  });
+  showState('state-idle');
+});
+
+/* ── Render ───────────────────────────────────────── */
+function renderResult(r) {
+  // Verdict
+  const vc = document.getElementById('verdict');
+  vc.className = 'verdict '+(r.prediction===1?'risk':'safe');
+  document.getElementById('v-ico').textContent   = r.prediction===1?'⚠️':'✅';
+  document.getElementById('v-label').textContent = r.label;
+  document.getElementById('v-sub').textContent   = `${(r.probability_chd*100).toFixed(1)}% CHD probability · ${r.risk_level} Risk`;
+  document.getElementById('v-badge').textContent = r.prediction===1?'CHD Risk':'Clear';
+
+  // Proba bars
+  setTimeout(()=>{
+    document.getElementById('pb-no').style.width  = (r.probability_no_chd*100).toFixed(1)+'%';
+    document.getElementById('pb-yes').style.width = (r.probability_chd*100).toFixed(1)+'%';
+    document.getElementById('pv-no').textContent  = (r.probability_no_chd*100).toFixed(1)+'%';
+    document.getElementById('pv-yes').textContent = (r.probability_chd*100).toFixed(1)+'%';
+  },100);
+
+  // Gauge
+  animateGauge(r.risk_score, r.risk_level);
+
+  // Features
+  renderFeatures(r.top_features);
+
+  // Message
+  document.getElementById('ai-txt').textContent = r.message;
+}
+
+function animateGauge(score, level) {
+  const pct    = Math.min(score/100,1);
+  const offset = 267*(1-pct);
+  const angle  = -90+pct*180;
+  let col = '#00c25a';
+  if(score>=75) col='#e53e3e';
+  else if(score>=50) col='#f97316';
+  else if(score>=25) col='#eab308';
+  setTimeout(()=>{
+    document.getElementById('ga-arc').style.strokeDashoffset = offset;
+    document.getElementById('ga-needle').setAttribute('transform',`rotate(${angle} 100 95)`);
+    const lvl=document.getElementById('g-lvl');
+    lvl.textContent=level+' Risk'; lvl.style.color=col;
+    let cur=0,target=Math.round(score),step=Math.max(target/40,1);
+    const t=setInterval(()=>{
+      cur=Math.min(cur+step,target);
+      document.getElementById('g-score').textContent=Math.round(cur);
+      if(cur>=target) clearInterval(t);
+    },20);
+  },200);
+}
+
+function renderFeatures(feats) {
+  const list=document.getElementById('fb-list');
+  list.innerHTML='';
+  const top=feats.slice(0,8);
+  const maxP=top[0]?.contribution_pct||1;
+  top.forEach((f,i)=>{
+    const barW=(f.contribution_pct/maxP*100).toFixed(1);
+    const cls=['r1','r2','r3','rn','rn','rn','rn','rn'][i]||'rn';
+    const delay=(i*0.07).toFixed(2)+'s';
+    const row=document.createElement('div');
+    row.className='fb-row';
+    row.innerHTML=`
+      <div class="fb-meta">
+        <span class="fb-name">${esc(f.label)}<span class="fb-val-lbl">${f.value}${f.unit?' '+f.unit:''}</span></span>
+        <span class="fb-pct">${f.contribution_pct.toFixed(1)}%</span>
+      </div>
+      <div class="fb-track"><div class="fb-fill ${cls}" id="fbf${i}"></div></div>`;
+    list.appendChild(row);
+    requestAnimationFrame(()=>{
+      setTimeout(()=>{
+        const fill=document.getElementById('fbf'+i);
+        if(fill){ fill.style.transition=`width .85s cubic-bezier(.4,0,.2,1) ${delay}`; fill.style.width=barW+'%'; }
+      },60);
+    });
+  });
+}
+
+/* ── Health check ─────────────────────────────────── */
+(async()=>{
+  try{
+    const r=await fetch(API+'/health');
+    if(!r.ok) throw new Error();
+  }catch{
+    console.warn('CardioRisk API not reachable at '+API);
+  }
+})();
+
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+</script>
+</body>
+</html>
